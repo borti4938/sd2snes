@@ -28,7 +28,7 @@
 #define NMI_VECT_DISABLE            $002BFD
 #define NMI_WRAM_PATCH_DISABLE      $002BFE
 #define NMI_WRAM_PATCH_COUNT        $002BFF
-#define NMI_WRAM_CHEATS             $002B00
+#define NMI_WRAM_CHEATS             $002A90
 #define WINDOW_STACK_BASE           $7E2000
 
 #define BG2_TILE_BUF                $7EA000
@@ -42,7 +42,8 @@
 
 #define ROOT_DIR                    $C10000
 
-#define CHEAT_ADDR                  $FC0000
+#define NUM_CHEATS                  $CFFFFE
+#define CHEAT_ADDR                  $D00000
 
 #define SPC_DATA                    $FD0000
 #define SPC_HEADER                  $FE0000

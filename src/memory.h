@@ -30,6 +30,8 @@
 #include <arm/NXP/LPC17xx/LPC17xx.h>
 #include "smc.h"
 
+#define MENU_ADDR_BRAM_SRC      (0xFF00)
+
 #define SRAM_ROM_ADDR           (0x000000L)
 #define SRAM_SAVE_ADDR          (0xE00000L)
 
@@ -37,9 +39,8 @@
 #define SRAM_DIR_ADDR           (0xC10000L)
 #define SRAM_DB_ADDR            (0xC80000L)
 
-#define MENU_ADDR_BRAM_SRC      (0xFF00)
-
-#define SRAM_CHEAT_ADDR         (0xFC0000L)
+#define SRAM_NUM_CHEATS         (0xCFFFFEL)
+#define SRAM_CHEAT_ADDR         (0xD00000L) /* banks D0-DF for 2048 cheats per YML file */
 
 #define SRAM_SPC_DATA_ADDR      (0xFD0000L)
 #define SRAM_SPC_HEADER_ADDR    (0xFE0000L)
