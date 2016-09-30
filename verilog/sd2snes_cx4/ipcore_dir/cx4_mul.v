@@ -7,17 +7,17 @@
 // \   \   \/     Version: P.20131013
 //  \   \         Application: netgen
 //  /   /         Filename: cx4_mul.v
-// /___/   /\     Timestamp: Mon Jul 25 22:26:18 2016
+// /___/   /\     Timestamp: Fri Sep 16 13:20:56 2016
 // \   \  /  \ 
 //  \___\/\___\
 //             
-// Command	: -w -sim -ofmt verilog D:/prj/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.ngc D:/prj/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.v 
+// Command	: -w -sim -ofmt verilog /media/sf_borti4938/Documents/Workspaces/GitHub/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.ngc /media/sf_borti4938/Documents/Workspaces/GitHub/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.v 
 // Device	: 3s400pq208-4
-// Input file	: D:/prj/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.ngc
-// Output file	: D:/prj/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.v
+// Input file	: /media/sf_borti4938/Documents/Workspaces/GitHub/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.ngc
+// Output file	: /media/sf_borti4938/Documents/Workspaces/GitHub/sd2snes/verilog/sd2snes_cx4/ipcore_dir/tmp/_cg/cx4_mul.v
 // # of Modules	: 1
 // Design Name	: cx4_mul
-// Xilinx        : E:\Xilinx\14.7\ISE_DS\ISE\
+// Xilinx        : /opt/Xilinx/14.7/ISE_DS/ISE/
 //             
 // Purpose:    
 //     This verilog netlist is a verification model and uses simulation 

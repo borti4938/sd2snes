@@ -186,46 +186,46 @@ uint8_t get_snes_reset_state(void) {
 uint32_t diffcount = 0, samecount = 0, didnotsave = 0, save_failed = 0, last_save_failed = 0;
 uint8_t sram_valid = 0;
 uint8_t snes_main_loop() {
-  if(!romprops.ramsize_bytes)return snes_get_mcu_cmd();
-  saveram_crc = calc_sram_crc(SRAM_SAVE_ADDR, romprops.ramsize_bytes);
-  sram_valid = sram_reliable();
-  if(crc_valid && sram_valid) {
-    if(save_failed) didnotsave++;
-    if(saveram_crc != saveram_crc_old) {
-      if(samecount) {
-        diffcount=1;
-      } else {
-        diffcount++;
-        didnotsave++;
+  if(romprops.ramsize_bytes) {
+    saveram_crc = calc_sram_crc(SRAM_SAVE_ADDR, romprops.ramsize_bytes);
+    sram_valid = sram_reliable();
+    if(crc_valid && sram_valid) {
+      if(save_failed) didnotsave++;
+      if(saveram_crc != saveram_crc_old) {
+        if(samecount) {
+          diffcount=1;
+        } else {
+          diffcount++;
+          didnotsave++;
+        }
+        samecount=0;
       }
-      samecount=0;
+      if(saveram_crc == saveram_crc_old) {
+        samecount++;
+      }
+      if(diffcount>=1 && samecount==5) {
+        printf("SaveRAM CRC: 0x%04lx; saving %s\n", saveram_crc, file_lfn);
+        writeled(1);
+        save_srm(file_lfn, romprops.ramsize_bytes, SRAM_SAVE_ADDR);
+        last_save_failed = save_failed;
+        save_failed = file_res ? 1 : 0;
+        didnotsave = save_failed ? 25 : 0;
+        writeled(0);
+      }
+      if(didnotsave>50) {
+        printf("periodic save (sram contents keep changing or previous save failed)\n");
+        diffcount=0;
+        writeled(1);
+        save_srm(file_lfn, romprops.ramsize_bytes, SRAM_SAVE_ADDR);
+        last_save_failed = save_failed;
+        save_failed = file_res ? 1 : 0;
+        didnotsave = save_failed ? 25 : 0;
+        writeled(!last_save_failed);
+      }
+      saveram_crc_old = saveram_crc;
     }
-    if(saveram_crc == saveram_crc_old) {
-      samecount++;
-    }
-    if(diffcount>=1 && samecount==5) {
-      printf("SaveRAM CRC: 0x%04lx; saving %s\n", saveram_crc, file_lfn);
-      writeled(1);
-      save_srm(file_lfn, romprops.ramsize_bytes, SRAM_SAVE_ADDR);
-      last_save_failed = save_failed;
-      save_failed = file_res ? 1 : 0;
-      didnotsave = save_failed ? 25 : 0;
-      writeled(0);
-    }
-    if(didnotsave>50) {
-      printf("periodic save (sram contents keep changing or previous save failed)\n");
-      diffcount=0;
-      writeled(1);
-      save_srm(file_lfn, romprops.ramsize_bytes, SRAM_SAVE_ADDR);
-      last_save_failed = save_failed;
-      save_failed = file_res ? 1 : 0;
-      didnotsave = save_failed ? 25 : 0;
-      writeled(!last_save_failed);
-    }
-    saveram_crc_old = saveram_crc;
+    printf("crc=%lx crc_valid=%d sram_valid=%d diffcount=%ld samecount=%ld, didnotsave=%ld\n", saveram_crc, crc_valid, sram_valid, diffcount, samecount, didnotsave);
   }
-  printf("crc=%lx crc_valid=%d sram_valid=%d diffcount=%ld samecount=%ld, didnotsave=%ld\n", saveram_crc, crc_valid, sram_valid, diffcount, samecount, didnotsave);
-
   return snes_get_mcu_cmd();
 }
 
@@ -264,7 +264,7 @@ void get_selected_name(uint8_t* fn) {
   }
   sram_readstrn(fn+count, fdaddr+6+SRAM_MENU_ADDR, 256-count);
   /* restore hidden file extension */
-  if(CFG.hide_extensions && (dot=strchr((char*)fn, 1))) {
+  if((dot=strchr((char*)fn, 1))) {
     *dot = '.';
   }
 }
