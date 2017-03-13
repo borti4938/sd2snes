@@ -41,12 +41,11 @@ filesel_init:
   rts
 
 fileselloop:
-fileselloop_s1
   sep #$20 : .as
   rep #$10 : .xl
   lda isr_done
   lsr
-  bcc fileselloop_s1
+  bcc fileselloop
   stz isr_done
   jsr printtime
   jsr filesel_updates ; update stuff, check keys etc
@@ -54,13 +53,13 @@ fileselloop_s1
   cmp #$01
   beq fileselloop_redraw ; then do
   jsr scroll_direntry
-  bra fileselloop_s1
+  bra fileselloop
 fileselloop_redraw
   stz filesel_dirty
   jsr filesel_statusbar
   jsr filesel_redraw
   jsr filesel_cleanup ; update phase 2
-  bra fileselloop_s1
+  bra fileselloop
   rts
 
 filesel_cleanup:
@@ -787,18 +786,13 @@ setup_224:
 setup_224_adjsel
   sta filesel_sel
 +
-  lda #18*64
-  sta textdmasize
   sep #$20 : .as
   lda #$0b
   sta $2110
   lda #$00
   sta $2110
-  lda #$00
-  sta barstep
   ora #$08
   sta $2133
-  stz vidmode
   lda #$01
   sta filesel_dirty
   lda #^space64
@@ -841,8 +835,6 @@ filesel_statusbar
   lda listdisp
   clc
   adc #$0a
-  clc
-  adc vidmode
   sta @print_y
   jsr hiprint
   plp
