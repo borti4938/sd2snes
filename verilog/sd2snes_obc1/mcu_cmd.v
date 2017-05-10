@@ -25,9 +25,9 @@ module mcu_cmd(
   input [7:0] cmd_data,
   input [7:0] param_data,
   output [2:0] mcu_mapper,
-  output mcu_rrq,
+  output reg mcu_rrq = 0,
   output mcu_write,
-  output mcu_wrq,
+  output reg mcu_wrq = 0,
   input mcu_rq_rdy,
   output [7:0] mcu_data_out,
   input [7:0] mcu_data_in,
@@ -58,6 +58,7 @@ module mcu_cmd(
   output reg dac_reset_out = 0,
   output reg [2:0] dac_vol_select_out = 3'b000,
   output reg dac_palmode_out = 0,
+  output reg [8:0] dac_ptr_out = 0,
 
   // MSU data
   output [13:0] msu_addr_out,
@@ -116,7 +117,7 @@ reg [13:0] MSU_ADDR_OUT_BUF;
 reg [13:0] MSU_PTR_OUT_BUF;
 reg [5:0] msu_status_set_out_buf;
 reg [5:0] msu_status_reset_out_buf;
-reg msu_status_reset_we_buf;
+reg msu_status_reset_we_buf = 0;
 reg MSU_RESET_OUT_BUF;
 
 reg [31:0] SNES_SYSCLK_FREQ_BUF;
@@ -169,6 +170,7 @@ always @(posedge clk) begin
   snescmd_we_out <= 1'b0;
   cheat_pgm_we_out <= 1'b0;
   dac_reset_out <= 1'b0;
+  MSU_RESET_OUT_BUF <= 1'b0;
   if (cmd_ready) begin
     case (cmd_data[7:4])
       4'h3: // select mapper
@@ -273,7 +275,14 @@ always @(posedge clk) begin
       8'he2: // resume DAC
         dac_play_out <= 1'b1;
       8'he3: // reset DAC (set DAC playback address = 0)
-        dac_reset_out <= 1'b1; // reset by default value, see above
+        case (spi_byte_cnt)
+          32'h2:
+            dac_ptr_out[8] <= param_data[0];
+          32'h3: begin
+            dac_ptr_out[7:0] <= param_data;
+            dac_reset_out <= 1'b1; // reset by default value, see above
+          end
+        endcase
       8'he4: // reset MSU read buffer pointer
         case (spi_byte_cnt)
           32'h2: begin
@@ -284,8 +293,6 @@ always @(posedge clk) begin
             MSU_PTR_OUT_BUF[7:0] <= param_data;
             MSU_RESET_OUT_BUF <= 1'b1;
           end
-          32'h4:
-            MSU_RESET_OUT_BUF <= 1'b0;
         endcase
       8'hec: // set DAC properties
         begin
@@ -406,54 +413,23 @@ always @(posedge clk) begin
   mcu_nextaddr_buf <= {mcu_nextaddr_buf[1:0], mcu_rq_rdy};
 end
 
-parameter ST_RQ = 2'b01;
-parameter ST_IDLE = 2'b10;
-
-reg [1:0] rrq_state;
-initial rrq_state = ST_IDLE;
-reg mcu_rrq_r;
-
-reg [1:0] wrq_state;
-initial wrq_state = ST_IDLE;
-reg mcu_wrq_r;
-
 always @(posedge clk) begin
-  case(rrq_state)
-    ST_IDLE: begin
-      if((param_ready | cmd_ready) && cmd_data[7:4] == 4'h8) begin
-        mcu_rrq_r <= 1'b1;
-        rrq_state <= ST_RQ;
-      end else
-        rrq_state <= ST_IDLE;
-    end
-    ST_RQ: begin
-      mcu_rrq_r <= 1'b0;
-      rrq_state <= ST_IDLE;
-    end
-  endcase
+  mcu_rrq <= 1'b0;
+  if((param_ready | cmd_ready) && cmd_data[7:4] == 4'h8) begin
+    mcu_rrq <= 1'b1;
+  end
 end
 
 always @(posedge clk) begin
-  case(wrq_state)
-    ST_IDLE: begin
-      if(param_ready && cmd_data[7:4] == 4'h9) begin
-        mcu_wrq_r <= 1'b1;
-        wrq_state <= ST_RQ;
-      end else
-        wrq_state <= ST_IDLE;
-    end
-    ST_RQ: begin
-      mcu_wrq_r <= 1'b0;
-      wrq_state <= ST_IDLE;
-    end
-  endcase
+  mcu_wrq <= 1'b0;
+  if(param_ready && cmd_data[7:4] == 4'h9) begin
+    mcu_wrq <= 1'b1;
+  end
 end
 
 // trigger for nextaddr
 assign mcu_nextaddr = mcu_nextaddr_buf == 2'b01;
 
-assign mcu_rrq = mcu_rrq_r;
-assign mcu_wrq = mcu_wrq_r;
 assign mcu_write = SD_DMA_STATUS
                    ? (SD_DMA_TGTr == 2'b00
                       ? SD_DMA_SRAM_WE
