@@ -129,7 +129,7 @@ SIZE = $(ARCH)-size
 NM = $(ARCH)-nm
 REMOVE = rm -f
 COPY = cp
-AWK = awk
+AWK = /opt/local/bin/awk
 
 
 #---------------- Compiler Options ----------------
