@@ -1,8 +1,11 @@
 ; menu entry structure:
+
+; HEADER SIZE: 4 bytes
 ; HEADER:
 ; 1 byte   line spacing for menu display
 ; 3 bytes  long pointer to menu window title
-;
+
+; ENTRY SIZE: 20 bytes
 ; ENTRIES:
 ; 1 byte   entry type (see below)
 ; 3 bytes  long pointer to menu entry text
@@ -277,6 +280,15 @@ menu_enttab_ingame:
  .byt  OPTTYPE_KVBYTE
  .word !CFG_R213F_OVERRIDE
  .byt  ^CFG_R213F_OVERRIDE
+
+ .byt  MTYPE_VALUE
+ .word !mtext_ingame_1chipbrightpatch
+ .byt  ^mtext_ingame_1chipbrightpatch
+ .word !kv_onoff
+ .byt  ^kv_onoff
+ .byt  OPTTYPE_KVBYTE
+ .word !CFG_1CHIP_BRIGHTNESS_PATCH
+ .byt  ^CFG_1CHIP_BRIGHTNESS_PATCH
 
  .byt 0
 
