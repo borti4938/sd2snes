@@ -13,7 +13,7 @@ cp ${toRootDir}/src/obj/firmware.img ${targetDirName}/.
 
 
 # snes menu (run make in snes folder in advance)
-cp ${toRootDir}/snes/menu.bin sd2snes/.
+cp ${toRootDir}/snes/menu.bin ${targetDirName}/.
 
 
 # FPGA files (generate main.bit files with Xilinx ISE design tools in advanced)

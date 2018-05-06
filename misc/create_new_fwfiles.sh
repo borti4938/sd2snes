@@ -41,4 +41,4 @@ snesDirName="${toRootDir}/snes"
 make clean -C ${srcDirName}
 make -C ${snesDirName}
 
-cp ${snesDirName}/menu.bin sd2snes/.
+cp ${snesDirName}/menu.bin ${targetDirName}/.
