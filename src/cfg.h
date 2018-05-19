@@ -25,6 +25,7 @@
 #define CFG_CONTROL_TYPE            ("ControlType")
 #define CFG_MSU_VOLUME_BOOST        ("MSUVolumeBoost")
 #define CFG_1CHIP_BRIGHTNESS_PATCH  ("1CHIPBrightnessPatch")
+#define CFG_ENABLE_RST_TO_MENU      ("ShortReset2Menu")
 
 typedef enum {
   VIDMODE_60 = 0,
@@ -51,6 +52,7 @@ typedef struct __attribute__ ((__packed__)) _cfg_block {
   uint8_t control_type;            /* control type (0: A=OK, B=Cancel; 1: A=Cancel, B=OK) */
   uint8_t msu_volume_boost;        /* volume boost (0: none; 1=+3.5dB; 2=+6dB; 3=+9dB; 4=+12dB) */
   uint8_t patch_1chip_brightness;  /* override register 2100 bits 3-0 */
+  uint8_t reset_to_menu;           /* Go back to menu on short reset */
 } cfg_t;
 
 int cfg_save(void);
@@ -81,4 +83,7 @@ uint8_t cfg_is_r213f_override_enabled(void);
 
 void cfg_set_patch_1chip_brightness(uint8_t);
 uint8_t cfg_is_patch_1chip_brightness(void);
+
+void cfg_set_reset_to_menu(uint8_t);
+uint8_t cfg_is_reset_to_menu(void);
 #endif

@@ -28,7 +28,8 @@ cfg_t CFG_DEFAULT = {
   .skin_name = "sd2snes.skin",
   .control_type = 0,
   .msu_volume_boost = 0,
-  .patch_1chip_brightness = 0
+  .patch_1chip_brightness = 0,
+  .reset_to_menu = 0
 };
 
 cfg_t CFG;
@@ -55,6 +56,8 @@ int cfg_save() {
   f_printf(&file_handle, "%s: %s\n", CFG_R213F_OVERRIDE, CFG.r213f_override ? "true" : "false");
   f_puts("\n# Enable 1CHIP brightness patching (experimental)\n", &file_handle);
   f_printf(&file_handle, "%s: %s\n", CFG_1CHIP_BRIGHTNESS_PATCH, CFG.patch_1chip_brightness ? "true" : "false");
+  f_puts("\n# Reset to menu on short reset\n", &file_handle);
+  f_printf(&file_handle, "%s: %s\n", CFG_ENABLE_RST_TO_MENU, CFG.reset_to_menu ? "true" : "false");
   f_puts("\n# IRQ hook related settings\n", &file_handle);
   f_printf(&file_handle, "#  %s: Overall enable IRQ hooks (required for in-game buttons & WRAM cheats)\n", CFG_ENABLE_IRQ_HOOK);
   f_printf(&file_handle, "#  %s: Enable in-game buttons (en/disable cheats, reset sd2snes...)\n", CFG_ENABLE_IRQ_BUTTONS);
@@ -137,6 +140,9 @@ int cfg_load() {
     }
     if(yaml_get_itemvalue(CFG_1CHIP_BRIGHTNESS_PATCH, &tok)) {
       CFG.patch_1chip_brightness = tok.boolvalue ? 1 : 0;
+    }
+    if(yaml_get_itemvalue(CFG_ENABLE_RST_TO_MENU, &tok)) {
+      CFG.reset_to_menu = tok.boolvalue ? 1 : 0;
     }
   }
   yaml_file_close();
@@ -271,6 +277,13 @@ void cfg_set_patch_1chip_brightness(uint8_t enable) {
 }
 uint8_t cfg_is_patch_1chip_brightness() {
   return CFG.patch_1chip_brightness;
+}
+
+void cfg_set_reset_to_menu(uint8_t enable) {
+  CFG.reset_to_menu = enable;
+}
+uint8_t cfg_is_reset_to_menu() {
+  return CFG.reset_to_menu;
 }
 
 void cfg_set_vidmode_game(cfg_vidmode_t vidmode) {
