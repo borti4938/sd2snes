@@ -1131,7 +1131,7 @@ supercic_pairmode
 	bsf	TRISC, 1	; data lines
 	banksel	PORTC
 	
-	btfss	PORTC, 6	; *K* skip link mode if we don't want it	
+	btfss	PORTC, 4	; *K* skip link mode if we don't want it	
 	goto	die
 	
 	nop
