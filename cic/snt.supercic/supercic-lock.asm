@@ -1144,8 +1144,8 @@ supercic_pairmode_loop
 	btfsc	PORTC, 1
 	bsf	0x5d, 4
 	btfss	PORTA, 3
-	goto	rst		; exit pair mode
-	;bcf	0x5d, 2
+;	goto	rst		; exit pair mode
+	bcf	0x5d, 2
 	movf	0x5d, w
 	movwf	PORTA
 	goto	supercic_pairmode_loop	; *K* jump around the entire loop, we are updating D4 so we're good.
