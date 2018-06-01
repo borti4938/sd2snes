@@ -89,7 +89,7 @@ initial begin
   audio_busy_r = 1'b1;
   data_busy_r = 1'b1;
   audio_error_r = 1'b0;
-  volume_r = 8'h00;
+  volume_r = 8'hff;
   addr_out_r = 32'h00000000;
   track_out_r = 16'h0000;
   data_start_r = 1'b0;
