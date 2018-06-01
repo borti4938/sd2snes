@@ -121,3 +121,5 @@ cic/supercic/supercic-key.hex
 cic/supercic/supercic-lock.hex
 contrib/*
 docs/*
+/.metadata/
+*.X/
