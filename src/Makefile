@@ -129,7 +129,7 @@ SIZE = $(ARCH)-size
 NM = $(ARCH)-nm
 REMOVE = rm -f
 COPY = cp
-AWK = /opt/local/bin/awk
+AWK = awk
 
 
 #---------------- Compiler Options ----------------
@@ -309,7 +309,7 @@ clean_list :
 	$(Q)$(REMOVE) $(TARGET).lss
 	$(Q)$(REMOVE) $(OBJ)
 	$(Q)$(REMOVE) $(OBJDIR)/autoconf.h
-	$(Q)$(REMOVE) $(OBJDIR)/*.bin
+	$(Q)$(REMOVE) $(OBJDIR)/#.bin
 	$(Q)$(REMOVE) $(OBJDIR)/firmware.img
 	$(Q)$(REMOVE) $(OBJDIR)/.DS_Store
 	$(Q)$(REMOVE) $(LST)
