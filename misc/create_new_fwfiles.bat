@@ -1,7 +1,7 @@
 set toRootDir=..
 set targetDirName=sd2snes
 
-mkdir ${targetDirName}
+mkdir %targetDirName%
 
 
 :: bs-x bin
@@ -21,6 +21,7 @@ set bitFile=main.bit
 %rle_cmd% %verilogDirName%\%bitFile% %targetDirName%\fpga_base.bit
 %rle_cmd% %verilogDirName%_cx4\%bitFile% %targetDirName%\fpga_cx4.bit
 %rle_cmd% %verilogDirName%_obc1\%bitFile% %targetDirName%\fpga_obc1.bit
+%rle_cmd% %verilogDirName%_gsu\%bitFile% %targetDirName%\fpga_gsu.bit
 
 
 :: firmware
