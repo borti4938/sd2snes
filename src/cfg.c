@@ -29,6 +29,7 @@ cfg_t CFG_DEFAULT = {
   .control_type = 0,
   .msu_volume_boost = 0,
   .patch_1chip_brightness = 0,
+  .gsu_speed = 0,
   .reset_to_menu = 0
 };
 
@@ -78,6 +79,8 @@ int cfg_save() {
   f_puts("\n# Enhancement chip settings\n", &file_handle);
   f_printf(&file_handle, "#  %s: Cx4 core speed (0: original, 1: fast, all instructions are single cycle)\n", CFG_CX4_SPEED);
   f_printf(&file_handle, "%s: %d\n", CFG_CX4_SPEED, CFG.cx4_speed);
+  f_printf(&file_handle, "#  %s: GSU core speed (0: original, 1: fast, instructions execute as fast as the implementation allows)\n", CFG_GSU_SPEED);
+  f_printf(&file_handle, "%s: %d\n", CFG_GSU_SPEED, CFG.gsu_speed);
   f_printf(&file_handle, "#  %s: MSU audio volume boost\n#    (0: none; 1: +3.5dBFS; 2: +6dBFS; 3: +9.5dBFS; 4: +12dBFS)\n", CFG_MSU_VOLUME_BOOST);
   f_printf(&file_handle, "%s: %d\n", CFG_MSU_VOLUME_BOOST, CFG.msu_volume_boost);
   file_close();
@@ -134,6 +137,9 @@ int cfg_load() {
     }
     if(yaml_get_itemvalue(CFG_CX4_SPEED, &tok)) {
       CFG.cx4_speed = tok.longvalue;
+    }
+    if(yaml_get_itemvalue(CFG_GSU_SPEED, &tok)) {
+      CFG.gsu_speed = tok.longvalue;
     }
     if(yaml_get_itemvalue(CFG_MSU_VOLUME_BOOST, &tok)) {
       CFG.msu_volume_boost = tok.longvalue;
