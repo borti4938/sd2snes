@@ -1,24 +1,34 @@
 #!/bin/bash
 
+
+# set directories
 toRootDir=".."
 targetDirName="sd2snes"
+binDirName="${toRootDir}/bin"
+utilsDirName="${toRootDir}/utils"
+snesDirName="${toRootDir}/snes"
+srcDirName="${toRootDir}/src"
+verilogDirName="${toRootDir}/verilog/sd2snes"
 
 
-# bs-x bin
-cp ${toRootDir}/bin/bsxpage.bin ${targetDirName}/.
+# make target directory
+mkdir ${targetDirName}
+
+
+# bs-x bin (and others)
+cp ${binDirName}/*.bin ${targetDirName}/.
 
 
 # firmware (run make in src folder in advance)
-cp ${toRootDir}/src/obj/firmware.img ${targetDirName}/.
+cp ${srcDirName}/obj/firmware.img ${targetDirName}/.
 
 
 # snes menu (run make in snes folder in advance)
-cp ${toRootDir}/snes/menu.bin ${targetDirName}/.
+cp ${snesDirName}/menu.bin ${targetDirName}/.
 
 
 # FPGA files (generate main.bit files with Xilinx ISE design tools in advanced)
-rle_cmd="${toRootDir}/utils/rle"
-verilogDirName="${toRootDir}/verilog/sd2snes"
+rle_cmd="${utilsDirName}/rle"
 bitFile="main.bit"
 
 ${rle_cmd} ${verilogDirName}/${bitFile} ${targetDirName}/fpga_base.bit

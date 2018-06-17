@@ -1,20 +1,31 @@
+:: set directories
 set toRootDir=..
 set targetDirName=sd2snes
+set binDirName=%toRootDir%\bin
+set utilsDirName=%toRootDir%\utils
+set snesDirName=%toRootDir%\snes
+set srcDirName=%toRootDir%\src
+set verilogDirName=%toRootDir%\verilog\sd2snes
 
 
-:: bs-x bin
-copy %toRootDir%\bin\bsxpage.bin %targetDirName%\.
+:: make target directory
+mkdir %targetDirName%
+
+
+:: bs-x binary (and others)
+copy %binDirName%\*.bin %targetDirName%\.
+
 
 :: firmware (run make in src folder in advance)
-copy %toRootDir%\src\obj\firmware.img %targetDirName%\.
+copy %srcDirName%\obj\firmware.img %targetDirName%\.
+
 
 :: snes menu (run make in snes folder in advance)
-copy %toRootDir%\snes\menu.bin %targetDirName%\.
+copy %snesDirName%\menu.bin %targetDirName%\.
 
 
 :: FPGA files (generate main.bit files with Xilinx ISE design tools in advanced)
-set rle_cmd=%toRootDir%\utils\rle.exe
-set verilogDirName=%toRootDir%\verilog\sd2snes
+set rle_cmd=%utilsDirName%\rle.exe
 set bitFile=main.bit
 
 %rle_cmd% %verilogDirName%\%bitFile% %targetDirName%\fpga_base.bit
