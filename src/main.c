@@ -54,11 +54,14 @@ extern volatile status_t ST;
 
 void menu_cmd_readdir(void) {
   uint8_t path[256];
+  SNES_FTYPE filetypes[16];
   snes_get_filepath(path, 256);
+  snescmd_readstrn(filetypes, SNESCMD_MCU_PARAM + 8, sizeof(filetypes));
   uint32_t tgt_addr = snescmd_readlong(SNESCMD_MCU_PARAM + 4) & 0xffffff;
-  uint8_t typemask = snescmd_readbyte(SNESCMD_MCU_PARAM + 8);
-printf("path=%s tgt=%06lx mask=%02x\n", path, tgt_addr, typemask);
-  scan_dir(path, tgt_addr, typemask);
+printf("path=%s tgt=%06lx types=", path, tgt_addr);
+uart_puts_hex((char*)filetypes);
+uart_putc('\n');
+  scan_dir(path, tgt_addr, filetypes);
 }
 
 int main(void) {
@@ -66,6 +69,11 @@ int main(void) {
   LPC_GPIO1->FIODIR = BV(23) | BV(SNES_CIC_PAIR_BIT);
   BITBAND(SNES_CIC_PAIR_REG->FIOSET, SNES_CIC_PAIR_BIT) = 1;
   LPC_GPIO0->FIODIR = BV(16);
+
+ /* disable pull-up on fake USB_CONNECT pin (P4.28), set P1.30 to VBUS */
+  LPC_PINCON->PINMODE9 |= BV(25);
+  LPC_PINCON->PINSEL3 |= BV(29);
+  LPC_PINCON->PINMODE3 |= BV(29);
 
  /* connect UART3 on P0[25:26] + SSP0 on P0[15:18] + MAT3.0 on P0[10] */
   LPC_PINCON->PINSEL1 = BV(18) | BV(19) | BV(20) | BV(21) /* UART3 */
@@ -189,9 +197,18 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
     firstboot = 0;
     delay_ms(SNES_RESET_PULSELEN_MS);
     sram_writebyte(32, SRAM_CMD_ADDR);
-    if(get_cic_state() == CIC_PAIR) {
-      printf("PAIR MODE ENGAGED!\n");
-      cic_pair(CFG.vidmode_menu, CFG.vidmode_menu);
+    enum cicstates cic_state = get_cic_state();
+    switch(cic_state) {
+      case CIC_PAIR:
+        ST.pairmode = 1;
+        printf("PAIR MODE ENGAGED!\n");
+        cic_pair(CFG.vidmode_menu, CFG.vidmode_menu);
+        break;
+      case CIC_SCIC:
+        ST.pairmode = 1;
+        break;
+      default:
+        ST.pairmode = 0;
     }
     fpga_set_dac_boost(CFG.msu_volume_boost);
     cfg_load_to_menu();
@@ -258,10 +275,10 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
           cfg_add_last_game(file_lfn);
           filesize = load_rom(file_lfn, SRAM_ROM_ADDR, LOADROM_WITH_SRAM | LOADROM_WITH_RESET | LOADROM_WAIT_SNES);
           break;
-        case SNES_CMD_SET_ALLOW_PAIR:
+/*        case SNES_CMD_SET_ALLOW_PAIR:
           cfg_set_pair_mode_allowed(snes_get_mcu_param() & 0xff);
           break;
-/*        case SNES_CMD_SELECT_FILE:
+        case SNES_CMD_SELECT_FILE:
           menu_cmd_select_file();
           cmd=0;
           break;
@@ -279,6 +296,13 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
         case SNES_CMD_SAVE_CFG:
           /* save config */
           cfg_get_from_menu();
+          cic_init(CFG.pair_mode_allowed);
+          if(CFG.pair_mode_allowed && cic_state == CIC_SCIC) {
+            delay_ms(50);
+            if(get_cic_state() == CIC_PAIR) {
+              cic_pair(CFG.vidmode_menu, CFG.vidmode_menu);
+            }
+          }
           cic_videomode(CFG.vidmode_menu);
           fpga_set_dac_boost(CFG.msu_volume_boost);
           cfg_save();

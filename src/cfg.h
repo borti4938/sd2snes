@@ -13,9 +13,9 @@
 #define CFG_BSX_USE_USERTIME      ("BSXUseUsertime")
 #define CFG_BSX_TIME              ("BSXTime")
 #define CFG_R213F_OVERRIDE        ("R213fOverride")
-#define CFG_ENABLE_IRQ_HOOK       ("EnableIRQHook")
-#define CFG_ENABLE_IRQ_BUTTONS    ("EnableIRQButtons")
-#define CFG_ENABLE_IRQ_HOLDOFF    ("EnableIRQHoldoff")
+#define CFG_ENABLE_INGAME_HOOK    ("EnableIngameHook")
+#define CFG_ENABLE_INGAME_BUTTONS ("EnableIngameButtons")
+#define CFG_ENABLE_HOOK_HOLDOFF   ("EnableHookHoldoff")
 #define CFG_ENABLE_SCREENSAVER    ("EnableScreensaver")
 #define CFG_SCREENSAVER_TIMEOUT   ("ScreensaverTimeout")
 #define CFG_SORT_DIRECTORIES      ("SortDirectories")
@@ -25,8 +25,9 @@
 #define CFG_SKIN_NAME             ("SkinName")
 #define CFG_CONTROL_TYPE          ("ControlType")
 #define CFG_MSU_VOLUME_BOOST      ("MSUVolumeBoost")
-#define CFG_1CHIP_BRIGHTNESS_PATCH  ("1CHIPBrightnessPatch")
-#define CFG_ENABLE_RST_TO_MENU      ("ShortReset2Menu")
+#define CFG_1CHIP_TRANSIENT_FIXES ("1CHIPTransientFixes")
+#define CFG_BRIGHTNESS_LIMIT      ("BrightnessLimit")
+#define CFG_ENABLE_RST_TO_MENU    ("ShortReset2Menu")
 
 typedef enum {
   VIDMODE_60 = 0,
@@ -35,26 +36,27 @@ typedef enum {
 } cfg_vidmode_t;
 
 typedef struct __attribute__ ((__packed__)) _cfg_block {
-  uint8_t vidmode_menu;         /* menu video mode */
-  uint8_t vidmode_game;         /* game video mode */
-  uint8_t pair_mode_allowed;    /* use pair mode if available */
-  uint8_t bsx_use_usertime;     /* use user defined time for BS */
-  uint8_t bsx_time[12];         /* user setting for BS time (in S-RTC format)*/
-  uint8_t r213f_override;       /* override register 213f bit 4 */
-  uint8_t enable_irq_hook;      /* enable hook routines */
-  uint8_t enable_irq_buttons;   /* enable in-game buttons in hook routines */
-  uint8_t enable_irq_holdoff;   /* enable temp hook disable after reset */
-  uint8_t enable_screensaver;   /* enable screen saver */
-  uint16_t screensaver_timeout; /* screensaver activate timeout in frames */
-  uint8_t sort_directories;     /* sort directories (slower) (default: on) */
-  uint8_t hide_extensions;      /* hide file extensions (default: off) */
-  uint8_t cx4_speed;            /* Cx4 speed (0: original, 1: no waitstates */
-  uint8_t skin_name[128];       /* file name of selected skin */
-  uint8_t control_type;         /* control type (0: A=OK, B=Cancel; 1: A=Cancel, B=OK) */
-  uint8_t msu_volume_boost;     /* volume boost (0: none; 1=+3.5dB; 2=+6dB; 3=+9dB; 4=+12dB) */
-  uint8_t gsu_speed;            /* GSU speed (0: original, 1: no waitstates */
-  uint8_t patch_1chip_brightness;  /* override register 2100 bits 3-0 */
-  uint8_t reset_to_menu;           /* Go back to menu on short reset */
+  uint8_t  vidmode_menu;            /* menu video mode */
+  uint8_t  vidmode_game;            /* game video mode */
+  uint8_t  pair_mode_allowed;       /* use pair mode if available */
+  uint8_t  bsx_use_usertime;        /* use user defined time for BS */
+  uint8_t  bsx_time[12];            /* user setting for BS time (in S-RTC format)*/
+  uint8_t  r213f_override;          /* override register 213f bit 4 */
+  uint8_t  enable_ingame_hook;      /* enable hook routines */
+  uint8_t  enable_ingame_buttons;   /* enable in-game buttons in hook routines */
+  uint8_t  enable_hook_holdoff;     /* enable temp hook disable after reset */
+  uint8_t  enable_screensaver;      /* enable screen saver */
+  uint16_t screensaver_timeout;     /* screensaver activate timeout in frames */
+  uint8_t  sort_directories;        /* sort directories (slower) (default: on) */
+  uint8_t  hide_extensions;         /* hide file extensions (default: off) */
+  uint8_t  cx4_speed;               /* Cx4 speed (0: original, 1: no waitstates */
+  uint8_t  skin_name[128];          /* file name of selected skin */
+  uint8_t  control_type;            /* control type (0: A=OK, B=Cancel; 1: A=Cancel, B=OK) */
+  uint8_t  msu_volume_boost;        /* volume boost (0: none; 1=+3.5dB; 2=+6dB; 3=+9dB; 4=+12dB) */
+  uint8_t  onechip_transient_fixes; /* override register 2100 bits 3-0 */
+  uint8_t  brightness_limit;        /* limit brightness set by register 2100 */
+  uint8_t  gsu_speed;               /* GSU speed (0: original, 1: no waitstates */
+  uint8_t  reset_to_menu;           /* Go back to menu on short reset */
 } cfg_t;
 
 int cfg_save(void);
@@ -83,8 +85,11 @@ uint8_t cfg_is_pair_mode_allowed(void);
 void cfg_set_r213f_override(uint8_t);
 uint8_t cfg_is_r213f_override_enabled(void);
 
-void cfg_set_patch_1chip_brightness(uint8_t);
-uint8_t cfg_is_patch_1chip_brightness(void);
+void cfg_set_onechip_transient_fixes(uint8_t);
+uint8_t cfg_is_onechip_transient_fixes(void);
+
+void cfg_set_brightness_limit(uint8_t);
+uint8_t cfg_get_brightness_limit(void);
 
 void cfg_set_reset_to_menu(uint8_t);
 uint8_t cfg_is_reset_to_menu(void);

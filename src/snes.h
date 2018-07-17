@@ -96,6 +96,7 @@ typedef struct __attribute__ ((__packed__)) _status {
   uint8_t num_recent_games;
   uint8_t is_u16;
   uint8_t u16_cfg;
+  uint8_t pairmode;
 } status_t;
 
 uint8_t crc_valid;
@@ -125,6 +126,7 @@ uint16_t snescmd_readshort(uint16_t addr);
 uint8_t snescmd_readbyte(uint16_t addr);
 uint32_t snescmd_readlong(uint16_t addr);
 uint64_t snescmd_gettime(void);
+uint16_t snescmd_readstrn(void *buf, uint16_t addr, uint16_t size);
 void snescmd_prepare_nmihook(void);
 void snes_get_filepath(uint8_t *buffer, uint16_t length);
 void status_load_to_menu(void);

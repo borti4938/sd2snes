@@ -67,7 +67,8 @@ math_cont
   beq nobuttonspressed
 buttonspressed
   stz idle_count
-  ldx #$0f
+  lda bright_limit
+  tax
   stx tgt_bright
   ldx #$01
   stx fade_speed
@@ -96,17 +97,11 @@ nobuttonspressed
 bright_up
   inc
   sta cur_bright
-  lda $2100
-  and #$f0
-  ora cur_bright
   sta $2100
   bra +
 bright_down
   dec
   sta cur_bright
-  lda $2100
-  and #$f0
-  ora cur_bright
   sta $2100
 + lda #$01
   sta isr_done
