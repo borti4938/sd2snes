@@ -140,7 +140,7 @@ uint8_t snes_reset_loop(void) {
   while(fpga_test() == FPGA_TEST_TOKEN) {
     cmd = snes_get_mcu_cmd();
     // 100ms timeout in case the reset hook is defeated somehow
-    if(getticks() > starttime + SNES_RESET_LOOP_TIMEOUT) {
+    if(getticks() > starttime + SNES_RESET_LOOP_TIMEOUT_MS/10) {
       cmd = SNES_CMD_RESET_LOOP_TIMEOUT;
     }
     if (cmd) {
