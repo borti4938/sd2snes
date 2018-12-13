@@ -179,7 +179,7 @@ wire [7:0] SNES_DATA_IN = (SNES_DATAr[3] & SNES_DATAr[2]);
 
 wire SNES_PARD_start = (SNES_PARDr[6:1] == 6'b111110);
 // Sample PAWR data earlier on CPU accesses, later on DMA accesses...
-wire SNES_PAWR_start = (SNES_PAWRr[6:1] == (({SNES_ADDR[22], SNES_ADDR[15:0]} == 17'h02100) ? 6'b111000 : 6'b100000));
+wire SNES_PAWR_start = (SNES_PAWRr[7:1] == (({SNES_ADDR[22], SNES_ADDR[15:0]} == 17'h02100) ? 7'b1110000 : 7'b1000000));
 wire SNES_PAWR_end = (SNES_PAWRr[6:1] == 6'b000001);
 wire SNES_RD_start = (SNES_READr[6:1] == 6'b111110);
 wire SNES_RD_end = (SNES_READr[6:1] == 6'b000001);
@@ -717,15 +717,15 @@ end
 always @(posedge CLK2) begin
   if(SNES_cycle_end) r213f_forceread <= 1'b1;
   else if(SNES_PARD_start & r213f_enable) begin
-//    r213f_delay <= 3'b000;
-//    r213f_state <= 2'b10;
-//  end else if(r213f_state == 2'b10) begin
-//    r213f_delay <= r213f_delay - 1;
-//    if(r213f_delay == 3'b000) begin
+    r213f_delay <= 3'b001;
+    r213f_state <= 2'b10;
+  end else if(r213f_state == 2'b10) begin
+    r213f_delay <= r213f_delay - 1;
+    if(r213f_delay == 3'b000) begin
       r213f_forceread <= 1'b0;
       r213f_state <= 2'b01;
       r213fr <= {SNES_DATA[7:5], mcu_region, SNES_DATA[3:0]};
-//    end
+    end
   end
 end
 

@@ -163,13 +163,13 @@ reg SNES_reset_strobe = 0;
 reg free_strobe = 0;
 reg ram_free_strobe = 0;
 
-wire [23:0] SNES_ADDR = (SNES_ADDRr[6] & SNES_ADDRr[5]);
-wire [7:0] SNES_PA = (SNES_PAr[6] & SNES_PAr[5]);
+wire [23:0] SNES_ADDR = (SNES_ADDRr[5] & SNES_ADDRr[4]);
+wire [7:0] SNES_PA = (SNES_PAr[5] & SNES_PAr[4]);
 wire [7:0] SNES_DATA_IN = (SNES_DATAr[3] & SNES_DATAr[2]);
 
 wire SNES_PARD_start = (SNES_PARDr[6:1] == 6'b111110);
 // Sample PAWR data earlier on CPU accesses, later on DMA accesses...
-wire SNES_PAWR_start = (SNES_PAWRr[6:1] == (({SNES_ADDR[22], SNES_ADDR[15:0]} == 17'h02100) ? 6'b111000 : 6'b100000)); /* 0000 necessary for SNES_DATA capture */
+wire SNES_PAWR_start = (SNES_PAWRr[6:1] == (({SNES_ADDR[22], SNES_ADDR[15:0]} == 17'h02100) ? 6'b111000 : 6'b100000));
 wire SNES_PAWR_end = (SNES_PAWRr[6:1] == 6'b000001);
 wire SNES_RD_start = (SNES_READr[6:1] == 6'b111110);
 wire SNES_RD_end = (SNES_READr[6:1] == 6'b000001);
@@ -262,7 +262,7 @@ parameter ST_GSU_RAM_RD_END  = 11'b00100000000;
 parameter ST_GSU_RAM_WR_ADDR = 11'b01000000000;
 parameter ST_GSU_RAM_WR_END  = 11'b10000000000;
 
-parameter SNES_DEAD_TIMEOUT = 17'd96000; // 1ms  // FIXME: this and some other constant times should be adjusted for new clock rate.
+parameter SNES_DEAD_TIMEOUT = 17'd85714; // 1ms
 
 parameter ROM_CYCLE_LEN = 4'd7; // Increased from 6 due to tight timing on some sd2snes.
 
@@ -311,34 +311,6 @@ dac snes_dac(
   .reset(dac_reset),
   .dac_address_ext(dac_ptr_addr)
 );
-
-//srtc snes_srtc (
-//  .clkin(CLK2),
-//  .addr_in(SNES_ADDR[0]),
-//  .data_in(SRTC_SNES_DATA_IN),
-//  .data_out(SRTC_SNES_DATA_OUT),
-//  .rtc_data_in(rtc_data),
-//  .enable(srtc_enable),
-//  .rtc_data_out(srtc_rtc_data_out),
-//  .reg_oe_falling(SNES_RD_start),
-//  .reg_oe_rising(SNES_RD_end),
-//  .reg_we_rising(SNES_WR_end),
-//  .rtc_we(srtc_rtc_we),
-//  .reset(srtc_reset),
-//  .srtc_state(DBG_srtc_state),
-//  .srtc_reg_we_rising(DBG_srtc_we_rising),
-//  .srtc_rtc_ptr(DBG_srtc_ptr),
-//  .srtc_we_sreg(DBG_srtc_we_sreg)
-//);
-//
-//rtc snes_rtc (
-//  .clkin(CLKIN),
-//  .rtc_data(rtc_data),
-//  .rtc_data_in(rtc_data_in),
-//  .pgm_we(rtc_pgm_we),
-//  .rtc_data_in1(srtc_rtc_data_out),
-//  .we1(srtc_rtc_we)
-//);
 
 msu snes_msu (
   .clkin(CLK2),
@@ -786,15 +758,15 @@ end
 always @(posedge CLK2) begin
   if(SNES_cycle_end) r213f_forceread <= 1'b1;
   else if(SNES_PARD_start & r213f_enable) begin
-//    r213f_delay <= 3'b000;
-//    r213f_state <= 2'b10;
-//  end else if(r213f_state == 2'b10) begin
-//    r213f_delay <= r213f_delay - 1;
-//    if(r213f_delay == 3'b000) begin
+    r213f_delay <= 3'b001;
+    r213f_state <= 2'b10;
+  end else if(r213f_state == 2'b10) begin
+    r213f_delay <= r213f_delay - 1;
+    if(r213f_delay == 3'b000) begin
       r213f_forceread <= 1'b0;
       r213f_state <= 2'b01;
       r213fr <= {SNES_DATA[7:5], mcu_region, SNES_DATA[3:0]};
-//    end
+    end
   end
 end
 
@@ -1065,40 +1037,5 @@ snescmd_buf snescmd (
   .dinb(snescmd_data_out_mcu), // input [7 : 0] dinb
   .doutb(snescmd_data_in_mcu) // output [7 : 0] doutb
 );
-
-/*
-wire [35:0] CONTROL0;
-
-chipscope_icon icon (
-    .CONTROL0(CONTROL0) // INOUT BUS [35:0]
-);
-
-chipscope_ila ila (
-    .CONTROL(CONTROL0), // INOUT BUS [35:0]
-    .CLK(CLK2), // IN
-    .TRIG0(SNES_ADDR), // IN BUS [23:0]
-    .TRIG1(SNES_DATA), // IN BUS [7:0]
-    .TRIG2({SNES_READ, SNES_WRITE, SNES_CPU_CLK, SNES_cycle_start, SNES_cycle_end, SNES_DEADr, MCU_RRQ, MCU_WRQ, MCU_RDY, ROM_WEr, ROM_WE, ROM_DOUT_ENr, ROM_SA, DBG_mcu_nextaddr, SNES_DATABUS_DIR, SNES_DATABUS_OE}),   // IN BUS [15:0]
-    .TRIG3({bsx_data_ovr, r213f_forceread, r213f_enable, SNES_PARD, spi_cmd_ready, spi_param_ready, spi_input_data, SD_DAT}), // IN BUS [17:0]
-    .TRIG4(ROM_ADDRr), // IN BUS [23:0]
-    .TRIG5(ROM_DATA), // IN BUS [15:0]
-    .TRIG6(MCU_DINr), // IN BUS [7:0]
-   .TRIG7(spi_byte_cnt[3:0])
-);
-
-/*
-ila_srtc ila (
-    .CONTROL(CONTROL0), // INOUT BUS [35:0]
-    .CLK(CLK2), // IN
-    .TRIG0(SD_DMA_DBG_cyclecnt), // IN BUS [23:0]
-    .TRIG1(SD_DMA_SRAM_DATA), // IN BUS [7:0]
-    .TRIG2({SPI_SCK, SPI_MOSI, SPI_MISO, spi_cmd_ready, SD_DMA_SRAM_WE, SD_DMA_EN, SD_CLK, SD_DAT, SD_DMA_NEXTADDR, SD_DMA_STATUS, 3'b000}),   // IN BUS [15:0]
-    .TRIG3({spi_cmd_data, spi_param_data}), // IN BUS [17:0]
-    .TRIG4(ROM_ADDRr), // IN BUS [23:0]
-    .TRIG5(ROM_DATA), // IN BUS [15:0]
-    .TRIG6(MCU_DINr), // IN BUS [7:0]
-   .TRIG7(ST_MEM_DELAYr)
-);
-*/
 
 endmodule
