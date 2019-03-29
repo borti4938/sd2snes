@@ -244,7 +244,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   file_close();
 
   uint16_t fpga_features_preload = romprops.fpga_features | FEAT_CMD_UNLOCK | FEAT_2100_LIMIT_NONE;
-  if(filename == (uint8_t*)"/sd2snes/menu.bin") {
+  if(filename == (uint8_t*)MENU_FILENAME) {
     fpga_set_features(fpga_features_preload);
   }
   /* TODO check prerequisites and set error code here */
@@ -275,7 +275,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   }
   uart_putc('\n');
   file_close();
-  
+
   printf("rom header map: %02x; mapper id: %d\n", romprops.header.map, romprops.mapper_id);
   ticks_total=getticks()-ticksstart;
   printf("%u ticks total\n", ticks_total);
@@ -364,16 +364,17 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   }
   printf("done\n");
 
-  if(cfg_is_r213f_override_enabled() && (filename != (uint8_t*)"/sd2snes/menu.bin") && !ST.is_u16) {
+  if(cfg_is_r213f_override_enabled() && (filename != (uint8_t*)MENU_FILENAME) && !ST.is_u16) {
     romprops.fpga_features |= FEAT_213F; /* e.g. for general consoles */
   }
   fpga_set_213f(romprops.region);
 //  fpga_set_features(romprops.fpga_features);
   fpga_set_dspfeat(romprops.fpga_dspfeat);
+  fpga_set_dac_boost(CFG.msu_volume_boost);
   dac_pause();
   dac_reset(0);
   if(get_cic_state() == CIC_PAIR) {
-    if(filename != (uint8_t*)"/sd2snes/menu.bin") {
+    if(filename != (uint8_t*)MENU_FILENAME) {
       if(CFG.vidmode_game == VIDMODE_AUTO) {
         cic_videomode(romprops.region);
       } else {
@@ -383,7 +384,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
     }
   }
 
-  if(cfg_is_onechip_transient_fixes() && (filename != (uint8_t*)"/sd2snes/menu.bin")) {
+  if(cfg_is_onechip_transient_fixes() && (filename != (uint8_t*)MENU_FILENAME)) {
     romprops.fpga_features |= FEAT_2100;
   }
   romprops.fpga_features |= FEAT_2100_LIMIT(cfg_get_brightness_limit());
@@ -415,6 +416,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
 // XXX    cheat_yaml_save(filename);
     cheat_program();
     fpga_set_features(romprops.fpga_features);
+    fpga_reset_srtc_state();
     snes_set_mcu_cmd(0);
     snes_reset(0);
     fpga_dspx_reset(0);
@@ -629,29 +631,32 @@ void save_srm(uint8_t* filename, uint32_t sram_size, uint32_t base_addr) {
 
 void save_sram(uint8_t* filename, uint32_t sram_size, uint32_t base_addr) {
   uint32_t count = 0;
-
+  uint32_t remain = sram_size;
+  size_t copy;
   FPGA_DESELECT();
   file_open(filename, FA_CREATE_ALWAYS | FA_WRITE);
   if(file_res) {
     uart_putc(0x30+file_res);
     return;
   }
-  while(count<sram_size) {
-    set_mcu_addr(base_addr+count);
-    FPGA_SELECT();
-    FPGA_TX_BYTE(0x88); /* read */
-    for(int j=0; j<sizeof(file_buf); j++) {
+  set_mcu_addr(base_addr);
+  FPGA_SELECT();
+  FPGA_TX_BYTE(0x88); /* read */
+  while(remain) {
+    copy = (remain > 512) ? 512 : remain;
+    for(int j=0; j < copy; j++) {
       FPGA_WAIT_RDY();
       file_buf[j] = FPGA_RX_BYTE();
       count++;
     }
-    FPGA_DESELECT();
-    file_write();
+    file_write(copy);
     if(file_res) {
       uart_putc(0x30+file_res);
       return;
     }
+    remain -= copy;
   }
+  FPGA_DESELECT();
   file_close();
 }
 

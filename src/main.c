@@ -134,25 +134,26 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
         while(disk_status(0) & (STA_NODISK));
         delay_ms(200);
       }
-      file_open((uint8_t*)"/sd2snes/menu.bin", FA_READ);
+      file_open((uint8_t*)MENU_FILENAME, FA_READ);
       if(file_status != FILE_OK) {
-        snes_bootprint("  /sd2snes/menu.bin not found!  \0");
+        snes_bootprint("  " MENU_FILENAME " not found!  \0");
         while(disk_status(0) == 0);
       } else {
         card_go = 1;
       }
       file_close();
     }
-//    snes_bootprint("           Loading ...          \0");
+    if(fpga_config == FPGA_ROM) snes_bootprint("           Loading ...          \0");
     led_pwm();
     rdyled(1);
     readled(0);
     writeled(0);
 
+    cic_init(0);
+
     if(firstboot) {
       cfg_load();
       cfg_save();
-      cic_init(cfg_is_pair_mode_allowed());
       cfg_validity_check_recent_games();
     }
     if(fpga_config != FPGA_BASE) fpga_pgm((uint8_t*)FPGA_BASE);
@@ -163,7 +164,7 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
     sram_writelong(0x12345678, SRAM_SCRATCHPAD);
     fpga_dspx_reset(1);
     uart_putc('(');
-    load_rom((uint8_t*)"/sd2snes/menu.bin", SRAM_MENU_ADDR, 0);
+    load_rom((uint8_t*)MENU_FILENAME, SRAM_MENU_ADDR, 0);
     /* force memory size + mapper */
     set_rom_mask(0x3fffff);
     set_mapper(0x7);
