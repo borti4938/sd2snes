@@ -19,6 +19,27 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module main(
+`ifdef MK2
+  /* Bus 1: PSRAM, 128Mbit, 16bit, 70ns */
+  output [22:0] ROM_ADDR,
+  output ROM_CE,
+  input MCU_OVR,
+  /* debug */
+  output p113_out,
+`endif
+`ifdef MK3
+  input SNES_CIC_CLK,
+  /* Bus 1: 2x PSRAM, 64Mbit, 16bit, 70ns */
+  output [21:0] ROM_ADDR,
+  output ROM_1CE,
+  output ROM_2CE,
+  output ROM_ZZ,
+  /* debug */
+  output PM6_out,
+  output PN6_out,
+  input  PT5_in,
+`endif
+
   /* input clock */
   input CLKIN,
 
@@ -40,10 +61,7 @@ module main(
   input SNES_PAWR_IN,
 
   /* SRAM signals */
-  /* Bus 1: PSRAM, 128Mbit, 16bit, 70ns */
   inout [15:0] ROM_DATA,
-  output [22:0] ROM_ADDR,
-  output ROM_CE,
   output ROM_OE,
   output ROM_WE,
   output ROM_BHE,
@@ -52,7 +70,6 @@ module main(
   /* Bus 2: SRAM, 4Mbit, 8bit, 45ns -> NOT USED; Backup RAM mapped to $E0:0000 in PSRAM */
   inout [7:0] RAM_DATA,
   output [18:0] RAM_ADDR,
-  output RAM_CE,
   output RAM_OE,
   output RAM_WE,
 
@@ -61,7 +78,7 @@ module main(
   inout SPI_MISO,
   input SPI_SS,
   input SPI_SCK,
-  input MCU_OVR,
+
   output MCU_RDY,
 
   output DAC_MCLK,
@@ -71,10 +88,7 @@ module main(
   /* SD signals */
   input [3:0] SD_DAT,
   inout SD_CMD,
-  inout SD_CLK,
-
-  /* debug */
-  output p113_out
+  inout SD_CLK
 );
 
 wire CLK2;
@@ -466,16 +480,6 @@ mcu_cmd snes_mcu_cmd(
   .dsp_feat_out(dsp_feat)
 );
 
-DCM_Scope snes_dcm(
-  .CLKIN_IN(CLKIN),
-  .CLKFX_OUT(CLK2),
-  .CLKDV_OUT(CLK_SCOPE),
-  .CLKIN_IBUFG_OUT(),
-  .CLK0_OUT(),
-  .LOCKED_OUT(DCM_LOCKED),
-  .RST_IN(DCM_RST)
-);
-
 address snes_addr(
   .CLK(CLK2),
   .MAPPER(MAPPER),
@@ -607,11 +611,79 @@ wire MCU_RD_HIT = |(STATE & (ST_MCU_RD_ADDR | ST_MCU_RD_END));
 wire MCU_HIT = MCU_WR_HIT | MCU_RD_HIT;
 
 // final address to PSRAM where ROM and SRAM is stored
+`ifdef MK2
+DCM_Scope snes_dcm(
+  .CLKIN_IN(CLKIN),
+  .CLKFX_OUT(CLK2),
+  .CLKDV_OUT(CLK_SCOPE),
+  .CLKIN_IBUFG_OUT(),
+  .CLK0_OUT(),
+  .LOCKED_OUT(DCM_LOCKED),
+  .RST_IN(DCM_RST)
+);
 assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[23:1]
             : MCU_HIT ? ROM_ADDRr[23:1] // keep MCU above sdd1 to allow it to use the free slot during normal SNES accesses
             : (sdd1_enable & ~SDD1_ROM_CE)?({1'b0, SDD1_ROM_ADDR} & ROM_MASK[23:1])
             : (sdd1_enable & ~SDD1_RAM_CE)?SDD1_RAM_ADDR[23:1]
             : MAPPED_SNES_ADDR[23:1];
+
+
+assign ROM_CE = 1'b0;
+
+assign p113_out = 1'b0;
+
+snescmd_buf snescmd (
+  .clka(CLK2), // input clka
+  .wea(SNES_WR_end & ((snescmd_unlock | feat_cmd_unlock) & snescmd_enable)), // input [0 : 0] wea
+  .addra(SNES_ADDR[8:0]), // input [8 : 0] addra
+  .dina(SNES_DATA), // input [7 : 0] dina
+  .douta(snescmd_dout), // output [7 : 0] douta
+  .clkb(CLK2), // input clkb
+  .web(snescmd_we_mcu), // input [0 : 0] web
+  .addrb(snescmd_addr_mcu), // input [8 : 0] addrb
+  .dinb(snescmd_data_out_mcu), // input [7 : 0] dinb
+  .doutb(snescmd_data_in_mcu) // output [7 : 0] doutb
+);
+`endif
+`ifdef MK3
+pll snes_pll(
+  .inclk0(CLKIN),
+  .c0(CLK2),
+  .locked(DCM_LOCKED),
+  .areset(DCM_RST)
+);
+
+assign ROM_ADDR22 = (SD_DMA_TO_ROM) ? MCU_ADDR[1]
+            : MCU_HIT ? ROM_ADDRr[1] // keep MCU above sdd1 to allow it to use the free slot during normal SNES accesses
+            : (sdd1_enable & ~SDD1_ROM_CE)?SDD1_ROM_ADDR[0] // SDD1_ROM_ADDR is a word address!
+            : (sdd1_enable & ~SDD1_RAM_CE)?SDD1_RAM_ADDR[1]
+            : MAPPED_SNES_ADDR[1];
+
+assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[23:2]
+            : MCU_HIT ? ROM_ADDRr[23:2] // keep MCU above sdd1 to allow it to use the free slot during normal SNES accesses
+            : (sdd1_enable & ~SDD1_ROM_CE)?({1'b0, SDD1_ROM_ADDR[21:1] & ROM_MASK[22:2]})
+            : (sdd1_enable & ~SDD1_RAM_CE)?SDD1_RAM_ADDR[23:2]
+            : MAPPED_SNES_ADDR[23:2];
+
+assign ROM_ZZ = 1'b1;
+assign ROM_1CE = ROM_ADDR22;
+assign ROM_2CE = ~ROM_ADDR22;
+
+snescmd_buf snescmd (
+  .clock(CLK2), // input clka
+  .wren_a(SNES_WR_end & ((snescmd_unlock | feat_cmd_unlock) & snescmd_enable)), // input [0 : 0] wea
+  .address_a(SNES_ADDR[8:0]), // input [8 : 0] addra
+  .data_a(SNES_DATA), // input [7 : 0] dina
+  .q_a(snescmd_dout), // output [7 : 0] douta
+  .wren_b(snescmd_we_mcu), // input [0 : 0] web
+  .address_b(snescmd_addr_mcu), // input [8 : 0] addrb
+  .data_b(snescmd_data_out_mcu), // input [7 : 0] dinb
+  .q_b(snescmd_data_in_mcu) // output [7 : 0] doutb
+);
+`endif
+
+// OE always active. Overridden by WE when needed.
+assign ROM_OE = 1'b0;
 
 // lower address bit to select [7:0] (ROM_ADDR0 = '1') or [15:8] (ROM_ADDR0 = '0') byte in the 16-bit word read from PSRAM
 assign ROM_ADDR0 = (SD_DMA_TO_ROM) ? MCU_ADDR[0]
@@ -776,10 +848,6 @@ assign ROM_WE = SD_DMA_TO_ROM ? MCU_WRITE
            : (ROM_HIT & IS_WRITABLE & SNES_CPU_CLK) ? SNES_WRITE
            : 1'b1;
 
-// OE always active. Overridden by WE when needed.
-assign ROM_OE = 1'b0;
-assign ROM_CE = 1'b0;
-
 // byte selector for PSRAM output; when S-DD1 is reading from ROM (PSRAM), access is 16bit wide
 // '0' when accessing high byte
 assign ROM_BHE = (sdd1_enable & ~SDD1_ROM_CE & ~MCU_HIT)?1'b0:ROM_ADDR0;
@@ -808,20 +876,5 @@ assign SNES_DATABUS_DIR = (~SNES_READ | (~SNES_PARD & (r213f_enable))) ?
                            : 1'b0);
 
 assign SNES_IRQ = 1'b0;
-
-assign p113_out = 1'b0;
-
-snescmd_buf snescmd (
-  .clka(CLK2), // input clka
-  .wea(SNES_WR_end & ((snescmd_unlock | feat_cmd_unlock) & snescmd_enable)), // input [0 : 0] wea
-  .addra(SNES_ADDR[8:0]), // input [8 : 0] addra
-  .dina(SNES_DATA), // input [7 : 0] dina
-  .douta(snescmd_dout), // output [7 : 0] douta
-  .clkb(CLK2), // input clkb
-  .web(snescmd_we_mcu), // input [0 : 0] web
-  .addrb(snescmd_addr_mcu), // input [8 : 0] addrb
-  .dinb(snescmd_data_out_mcu), // input [7 : 0] dinb
-  .doutb(snescmd_data_in_mcu) // output [7 : 0] doutb
-);
 
 endmodule

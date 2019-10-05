@@ -57,7 +57,7 @@ extern uint32_t saveram_crc_old;
 extern uint8_t sram_crc_valid;
 extern uint32_t sram_crc_romsize;
 extern cfg_t CFG;
-extern status_t ST;
+extern snes_status_t STS;
 
 void sram_hexdump(uint32_t addr, uint32_t len) {
   static uint8_t buf[16];
@@ -364,7 +364,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   }
   printf("done\n");
 
-  if(cfg_is_r213f_override_enabled() && (filename != (uint8_t*)MENU_FILENAME) && !ST.is_u16) {
+  if(cfg_is_r213f_override_enabled() && (filename != (uint8_t*)MENU_FILENAME) && !STS.is_u16) {
     romprops.fpga_features |= FEAT_213F; /* e.g. for general consoles */
   }
   fpga_set_213f(romprops.region);
@@ -373,14 +373,15 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   fpga_set_dac_boost(CFG.msu_volume_boost);
   dac_pause();
   dac_reset(0);
+/* fully enable pair mode again instead of just setting the video/d4 mode
+   in case previous pair mode entry was skipped / pair mode undetected so far */
   if(get_cic_state() == CIC_PAIR) {
     if(filename != (uint8_t*)MENU_FILENAME) {
       if(CFG.vidmode_game == VIDMODE_AUTO) {
-        cic_videomode(romprops.region);
+        cic_pair(romprops.region, romprops.region);
       } else {
-        cic_videomode(CFG.vidmode_game);
+        cic_pair(CFG.vidmode_game, romprops.region);
       }
-      cic_d4(romprops.region);
     }
   }
 
@@ -390,7 +391,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   romprops.fpga_features |= FEAT_2100_LIMIT(cfg_get_brightness_limit());
 
   /* enable Satellaview Base emulation only if no physical Satellaview Base unit is present */
-  if(!ST.has_satellaview) {
+  if(!STS.has_satellaview) {
     romprops.fpga_features |= FEAT_SATELLABASE;
   }
 
@@ -405,7 +406,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
     printf("resetting SNES\n");
     fpga_dspx_reset(1);
     snes_reset(1);
-    if(ST.is_u16 && (ST.u16_cfg & 0x01)) {
+    if(STS.is_u16 && (STS.u16_cfg & 0x01)) {
       delay_ms(60*SNES_RESET_PULSELEN_MS);
     } else {
       delay_ms(SNES_RESET_PULSELEN_MS);

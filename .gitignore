@@ -19,6 +19,7 @@ autoconf.h
 utils/rle
 utils/derle
 *.bit
+*.bi3
 *.i
 *.s
 *.txt
@@ -66,7 +67,6 @@ utils/derle
 *.asy
 *.ncf
 *.sym
-*.vhd
 *.veo
 *.vho
 *.wcfg
@@ -121,5 +121,12 @@ cic/supercic/supercic-key.hex
 cic/supercic/supercic-lock.hex
 contrib/*
 docs/*
-/.metadata/
-*.X/
+
+utils/bin2asm
+utils/bin2c
+utils/chili2chr
+utils/genbsxpage
+utils/gentilemap
+utils/mem2lorom
+utils/palremap
+utils/palreorder
